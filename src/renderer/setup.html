@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="ja">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>kintone Backup Scheduler - セットアップ</title>
+        <link rel="stylesheet" href="styles.css" />
+    </head>
+    <body>
+        <div class="container">
+            <header>
+                <h1>kintone Backup Scheduler</h1>
+                <p class="subtitle">セットアップウィザード</p>
+            </header>
+
+            <!-- ステップインジケーター -->
+            <div class="step-indicator">
+                <div class="step active" data-step="1">
+                    <span class="step-number">1</span>
+                    <span class="step-label">認証設定</span>
+                </div>
+                <div class="step" data-step="2">
+                    <span class="step-number">2</span>
+                    <span class="step-label">スケジュール</span>
+                </div>
+                <div class="step" data-step="3">
+                    <span class="step-number">3</span>
+                    <span class="step-label">アプリ選択</span>
+                </div>
+                <div class="step" data-step="4">
+                    <span class="step-number">4</span>
+                    <span class="step-label">完了</span>
+                </div>
+            </div>
+
+            <main>
+                <!-- Step 1: 認証設定 -->
+                <div id="step1" class="step-content active">
+                    <h2>kintone接続設定</h2>
+                    <form id="authForm">
+                        <div class="form-group">
+                            <label for="domain">サブドメイン <span class="required">*</span></label>
+                            <div class="input-with-suffix">
+                                <input type="text" id="domain" name="domain" placeholder="your-subdomain" required />
+                                <span class="suffix">.cybozu.com</span>
+                            </div>
+                            <small>例: example.cybozu.com の場合は「example」を入力</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="username">ユーザー名 <span class="required">*</span></label>
+                            <input type="text" id="username" name="username" placeholder="ログインユーザー名" required />
+                            <small>管理者権限のあるユーザーを推奨</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="password">パスワード <span class="required">*</span></label>
+                            <input type="password" id="password" name="password" placeholder="パスワード" required />
+                        </div>
+
+                        <div class="form-group">
+                            <label for="backupAppId">バックアップ記録アプリID <span class="required">*</span></label>
+                            <input type="number" id="backupAppId" name="backupAppId" placeholder="123" required />
+                            <small>
+                                バックアップ履歴を記録するkintoneアプリのID<br />
+                                <a href="#" id="showFieldsLink">必要なフィールド定義を確認</a>
+                            </small>
+                        </div>
+
+                        <div class="button-group">
+                            <button type="button" id="testConnection" class="btn btn-secondary">接続テスト</button>
+                            <button type="button" id="nextStep1" class="btn btn-primary" disabled>次へ</button>
+                        </div>
+                    </form>
+
+                    <div id="connectionStatus" class="status-message" style="display: none"></div>
+                </div>
+
+                <!-- Step 2: スケジュール設定 -->
+                <div id="step2" class="step-content">
+                    <h2>バックアップスケジュール設定</h2>
+                    <form id="scheduleForm">
+                        <div class="form-group">
+                            <label>実行曜日 <span class="required">*</span></label>
+                            <div class="checkbox-group">
+                                <label class="checkbox-label"> <input type="checkbox" name="days" value="sunday" /> 日曜日 </label>
+                                <label class="checkbox-label"> <input type="checkbox" name="days" value="monday" /> 月曜日 </label>
+                                <label class="checkbox-label"> <input type="checkbox" name="days" value="tuesday" /> 火曜日 </label>
+                                <label class="checkbox-label"> <input type="checkbox" name="days" value="wednesday" /> 水曜日 </label>
+                                <label class="checkbox-label"> <input type="checkbox" name="days" value="thursday" /> 木曜日 </label>
+                                <label class="checkbox-label"> <input type="checkbox" name="days" value="friday" /> 金曜日 </label>
+                                <label class="checkbox-label"> <input type="checkbox" name="days" value="saturday" /> 土曜日 </label>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="scheduleTime">実行時刻 <span class="required">*</span></label>
+                            <select id="scheduleTime" name="scheduleTime" required>
+                                <option value="">選択してください</option>
+                            </select>
+                            <small>システム負荷の少ない深夜時間帯を推奨</small>
+                        </div>
+
+                        <div class="button-group">
+                            <button type="button" id="prevStep2" class="btn btn-secondary">戻る</button>
+                            <button type="button" id="nextStep2" class="btn btn-primary">次へ</button>
+                        </div>
+                    </form>
+
+                    <div id="scheduleStatus" class="status-message" style="display: none"></div>
+                </div>
+
+                <!-- Step 3: アプリ選択 -->
+                <div id="step3" class="step-content">
+                    <h2>バックアップ対象アプリの選択</h2>
+
+                    <div id="loadingApps" class="loading">
+                        <div class="spinner"></div>
+                        <p>アプリ一覧を読み込んでいます...</p>
+                    </div>
+
+                    <div id="appsList" style="display: none">
+                        <div class="search-box">
+                            <input type="text" id="appSearch" placeholder="アプリ名で検索..." />
+                        </div>
+
+                        <div class="select-all">
+                            <label class="checkbox-label"> <input type="checkbox" id="selectAllApps" /> すべて選択 </label>
+                        </div>
+
+                        <div id="appsContainer" class="apps-container">
+                            <!-- アプリのチェックボックスリストが動的に生成されます -->
+                        </div>
+
+                        <div class="button-group">
+                            <button type="button" id="prevStep3" class="btn btn-secondary">戻る</button>
+                            <button type="button" id="verifyAndBackup" class="btn btn-primary">選択したアプリを検証してバックアップ</button>
+                        </div>
+                    </div>
+
+                    <div id="verificationStatus" class="status-message" style="display: none"></div>
+                </div>
+
+                <!-- Step 4: 完了 -->
+                <div id="step4" class="step-content">
+                    <h2>セットアップ完了</h2>
+
+                    <div id="setupProgress" class="progress-container">
+                        <div class="progress-bar">
+                            <div id="progressFill" class="progress-fill"></div>
+                        </div>
+                        <p id="progressText">初回バックアップを実行中...</p>
+                    </div>
+
+                    <div id="setupComplete" style="display: none">
+                        <div class="success-icon">✓</div>
+                        <h3>セットアップが完了しました!</h3>
+                        <div class="summary">
+                            <p><strong>設定内容:</strong></p>
+                            <ul id="setupSummary"></ul>
+                        </div>
+                        <button type="button" id="finishSetup" class="btn btn-primary btn-large">アプリを起動</button>
+                    </div>
+
+                    <div id="setupError" class="error-message" style="display: none">
+                        <h3>エラーが発生しました</h3>
+                        <p id="errorDetails"></p>
+                        <button type="button" id="retrySetup" class="btn btn-secondary">再試行</button>
+                    </div>
+                </div>
+            </main>
+        </div>
+
+        <script src="setup.js"></script>
+    </body>
+</html>

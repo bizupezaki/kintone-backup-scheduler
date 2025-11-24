@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="ja">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>kintone Backup Scheduler</title>
+        <link rel="stylesheet" href="styles.css" />
+        <style>
+            body {
+                background: #f5f6fa;
+                padding: 0;
+            }
+            .main-container {
+                max-width: 1400px;
+                margin: 0;
+                background: #f5f6fa;
+                box-shadow: none;
+                border-radius: 0;
+            }
+            .main-header {
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                color: white;
+                padding: 20px 40px;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+            .main-content {
+                padding: 30px 40px;
+            }
+            .nav-tabs {
+                display: flex;
+                gap: 10px;
+                margin-bottom: 30px;
+                border-bottom: 2px solid #e0e0e0;
+            }
+            .nav-tab {
+                padding: 12px 24px;
+                background: transparent;
+                border: none;
+                border-bottom: 3px solid transparent;
+                cursor: pointer;
+                font-size: 14px;
+                font-weight: 600;
+                color: #666;
+                transition: all 0.3s;
+            }
+            .nav-tab:hover {
+                color: #667eea;
+            }
+            .nav-tab.active {
+                color: #667eea;
+                border-bottom-color: #667eea;
+            }
+            .tab-content {
+                display: none;
+                background: white;
+                padding: 30px;
+                border-radius: 8px;
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            }
+            .tab-content.active {
+                display: block;
+            }
+            .action-buttons {
+                display: flex;
+                gap: 15px;
+            }
+            .card {
+                background: white;
+                padding: 20px;
+                border-radius: 8px;
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+                margin-bottom: 20px;
+            }
+            .stats-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+                gap: 20px;
+                margin-bottom: 30px;
+            }
+            .stat-card {
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                color: white;
+                padding: 20px;
+                border-radius: 8px;
+                text-align: center;
+            }
+            .stat-value {
+                font-size: 32px;
+                font-weight: bold;
+                margin-bottom: 5px;
+            }
+            .stat-label {
+                font-size: 14px;
+                opacity: 0.9;
+            }
+            table {
+                width: 100%;
+                border-collapse: collapse;
+            }
+            th,
+            td {
+                padding: 12px;
+                text-align: left;
+                border-bottom: 1px solid #e0e0e0;
+            }
+            th {
+                background: #f8f9fa;
+                font-weight: 600;
+                color: #555;
+            }
+            tr:hover {
+                background: #f8f9fa;
+            }
+            .badge {
+                padding: 4px 8px;
+                border-radius: 4px;
+                font-size: 12px;
+                font-weight: 600;
+            }
+            .badge-success {
+                background: #d4edda;
+                color: #155724;
+            }
+            .badge-error {
+                background: #f8d7da;
+                color: #721c24;
+            }
+            .badge-warning {
+                background: #fff3cd;
+                color: #856404;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="main-container">
+            <header class="main-header">
+                <div>
+                    <h1>kintone Backup Scheduler</h1>
+                    <p>バックアップ管理システム</p>
+                </div>
+                <div class="action-buttons">
+                    <button class="btn btn-secondary" id="settingsBtn">設定</button>
+                </div>
+            </header>
+
+            <main class="main-content">
+                <!-- 統計カード -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-value" id="totalApps">0</div>
+                        <div class="stat-label">登録アプリ数</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="totalBackups">0</div>
+                        <div class="stat-label">総バックアップ数</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="lastBackupTime">-</div>
+                        <div class="stat-label">最終バックアップ</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="totalRecords">0</div>
+                        <div class="stat-label">バックアップレコード数</div>
+                    </div>
+                </div>
+
+                <!-- タブナビゲーション -->
+                <div class="nav-tabs">
+                    <button class="nav-tab active" data-tab="backup">バックアップ</button>
+                    <button class="nav-tab" data-tab="restore">復元</button>
+                    <button class="nav-tab" data-tab="history">履歴</button>
+                </div>
+
+                <!-- バックアップタブ -->
+                <div id="backupTab" class="tab-content active">
+                    <h2>手動バックアップ</h2>
+
+                    <div class="card">
+                        <div class="form-group">
+                            <label>バックアップ種別</label>
+                            <div style="display: flex; gap: 20px">
+                                <label class="checkbox-label">
+                                    <input type="radio" name="backupType" value="differential" checked />
+                                    差分バックアップ
+                                </label>
+                                <label class="checkbox-label">
+                                    <input type="radio" name="backupType" value="full" />
+                                    全体バックアップ
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>対象アプリ</label>
+                            <div id="backupAppsList" class="apps-container" style="max-height: 300px">
+                                <!-- アプリリストが動的に生成されます -->
+                            </div>
+                        </div>
+
+                        <button class="btn btn-primary" id="runBackupBtn">バックアップ実行</button>
+                    </div>
+
+                    <div id="backupProgress" style="display: none">
+                        <div class="progress-bar">
+                            <div id="backupProgressFill" class="progress-fill"></div>
+                        </div>
+                        <p id="backupProgressText"></p>
+                    </div>
+                </div>
+
+                <!-- 復元タブ -->
+                <div id="restoreTab" class="tab-content">
+                    <h2>バックアップから復元</h2>
+
+                    <div class="card">
+                        <div class="form-group">
+                            <label>アプリを選択</label>
+                            <select id="restoreAppSelect">
+                                <option value="">選択してください</option>
+                            </select>
+                        </div>
+
+                        <div id="restoreBackupsList" style="display: none">
+                            <h3>バックアップ日時を選択</h3>
+                            <div id="backupsListContainer"></div>
+                        </div>
+
+                        <div id="restoreRecordsList" style="display: none">
+                            <h3>復元するレコードを選択</h3>
+                            <div class="select-all">
+                                <label class="checkbox-label"> <input type="checkbox" id="selectAllRecords" /> すべて選択 </label>
+                            </div>
+                            <div id="recordsListContainer"></div>
+                            <button class="btn btn-primary" id="executeRestoreBtn" style="margin-top: 20px">復元実行</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 履歴タブ -->
+                <div id="historyTab" class="tab-content">
+                    <h2>バックアップ履歴</h2>
+
+                    <div class="card">
+                        <table id="historyTable">
+                            <thead>
+                                <tr>
+                                    <th>日時</th>
+                                    <th>アプリ名</th>
+                                    <th>種別</th>
+                                    <th>レコード数</th>
+                                    <th>ステータス</th>
+                                    <th>処理時間</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- 履歴が動的に生成されます -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </main>
+        </div>
+
+        <script src="main.js"></script>
+    </body>
+</html>
