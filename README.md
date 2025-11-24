@@ -79,7 +79,7 @@ MIT
 -   @kintone/rest-api-client 5.x
 -   better-sqlite3 9.x
 -   archiver 6.x
--   axios + axios-retry（指数バックオフ、Jitter 付きリトライ）
+-   axios + axios-retry（指数バックオフ、jitter 付きリトライ）
 -   winston 3.x（ロギング）
 -   electron-store 8.x（暗号化設定ストレージ）
 -   fs-extra 11.x（ファイル操作）
@@ -89,7 +89,7 @@ MIT
 
 -   **自動リトライ**: API エラー時に最大 5 回まで自動リトライ
 -   **指数バックオフ**: 初回 1 秒待機、最大 32 秒まで段階的に待機時間を延長
--   **Jitter 機能**: リトライ時の待機時間に±20%のランダム揺らぎを追加（サーバー負荷分散）
+-   **jitter 機能**: リトライ時の待機時間に±20%のランダム揺らぎを追加（サーバー負荷分散）
 -   **Rate Limit 対応**: 429 エラー時は Retry-After ヘッダーに従って待機
 -   **リトライ対象エラー**: 429, 500, 502, 503, 504 ステータスコード
 
